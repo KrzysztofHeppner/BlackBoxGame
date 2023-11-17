@@ -9,14 +9,14 @@ using namespace std;
 const char znaki[17] = { (char)201, (char)187, (char)200, (char)188, (char)186, (char)205,
                          (char)218, (char)191, (char)192, (char)217, (char)179, (char)196,
                          (char)197, (char)194, (char)195, (char)193, (char)180};
-/* 0:w 1:s 2:a 3:d 4:q 5:u 6:r 7:space 8:o 9:k 10:p 11:h */
-const char keyType[12] = { 'W', 'S', 'A', 'D', 'Q', 'U', 'R', ' ', 'O', 'K', 'P', 'H' };
+/* 0:w 1:s 2:a 3:d 4:q 5:u 6:r 7:space 8:o 9:k 10:p 11:h 12:N 13:M*/
+const char keyType[14] = { 'W', 'S', 'A', 'D', 'Q', 'U', 'R', ' ', 'O', 'K', 'P', 'H', 'N', 'M'};
 const int rozmiarXMax = 110;
 const int rozmiarYMax = 55;
 
 
 
-void rob(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel, int rozmiarXAkt, int rozmiarYAkt, int ods);
+void WyswietlPlansze(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel, int rozmiarXAkt, int rozmiarYAkt, int ods, int pozycja[2]);
 
 //do kursora dla wygląd
 void ShowConsoleCursor(bool jaki)
@@ -34,43 +34,57 @@ void ShowConsoleCursor(bool jaki)
 
 
 int main() {
-#pragma region zmienne
-    bool keyDown[12]{}; for (int i = 0; i < 12; i++) keyDown[i] = false;
+    #pragma region zmienne
+    bool keyDown[14]{}; for (int i = 0; i < 14; i++) keyDown[i] = false;
     char tab[rozmiarXMax][rozmiarYMax]{};
     for (int y = 0; y < rozmiarYMax; y++){
         for (int x = 0; x < rozmiarXMax; x++){
             tab[x][y] = ' ';
         }
     }
-    int aktWiel = 10;
+    int aktWiel = 7;
     int rozmiarXAkt = rozmiarXMax-1;
     int rozmiarYAkt = rozmiarYMax-1;
+
     int ods = (rozmiarYAkt + 1) / (aktWiel+1);
 
-    rozmiarYAkt = 4 + ods * aktWiel;
+    rozmiarYAkt = ods * aktWiel;
     rozmiarXAkt = rozmiarYAkt * 2;
 
-#pragma endregion
+    int pozycja[2]{ 0,0};
+    #pragma endregion
 
-    cout << "\x1B[2J\x1B[H" << endl;
+    cout << "\x1B[2J\x1B[H";
     ShowConsoleCursor(false);
-    rob(NULL, tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods);
+    WyswietlPlansze(NULL, tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja);
     while (true)
     {
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 14; i++)
         {
             if ((GetAsyncKeyState(keyType[i]) & 0x8000) && (keyDown[i] == false))
             {
                 keyDown[i] = true;
-                //cout << keyType[i] << " ";
-                if (keyType[i] == 'A' && aktWiel != 12)
+                switch (keyType[i])
                 {
-                    aktWiel++;
+                    case 'N':
+                        if (aktWiel != 12) { aktWiel++; }break;
+                    case 'M':
+                        if ((aktWiel != 7) && (pozycja[1] < aktWiel - 1) && (pozycja[0] < aktWiel - 1)){ aktWiel--; }break;
+                    case 'W':
+                        if (pozycja[0] != 0) { pozycja[0]--; } break;
+                    case 'S':
+                        if (pozycja[0] < aktWiel - 1) { pozycja[0]++; } break;
+                    case 'A':
+                        if (pozycja[1] != 0) { pozycja[1]--; } break;
+                    case 'D':
+                        if (pozycja[1] < aktWiel - 1) { pozycja[1]++; } break;
+
+                    default:
+                        break;
                 }
-                if (keyType[i] == 'D' && aktWiel != 1)
-                {
-                    aktWiel--;
-                }
+
+
+
                 for (int y = 0; y < rozmiarYMax; y++) {
                     for (int x = 0; x < rozmiarXMax; x++) {
                         tab[x][y] = ' ';
@@ -79,9 +93,9 @@ int main() {
                 rozmiarXAkt = rozmiarXMax - 1;
                 rozmiarYAkt = rozmiarYMax - 1;
                 ods = (rozmiarYAkt + 1) / (aktWiel + 1);
-                rozmiarYAkt = 4 + ods * aktWiel;
+                rozmiarYAkt = ods * aktWiel;
                 rozmiarXAkt = rozmiarYAkt * 2;
-                rob(keyType[i], tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods);
+                WyswietlPlansze(keyType[i], tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja);
             }
             if (!(GetAsyncKeyState(keyType[i]) & 0x8000) && (keyDown[i] == true))
             {
@@ -95,87 +109,92 @@ int main() {
     return 0;
 }
 
-void rob(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel,  int rozmiarXAkt,  int rozmiarYAkt, int ods)
+void WyswietlPlansze(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel,  int rozmiarXAkt,  int rozmiarYAkt, int ods, int pozycja[2])
 {
-    
+    #pragma region pusta plansza
+    int pozX = 0;
+    int pozY = 0;
 
-
-    for (int y = 0; y <= rozmiarYAkt; y++)
+    for (int y = 0; y < aktWiel; y++)
     {
-        tab[0][y] = znaki[4];
-        tab[rozmiarXAkt][y] = znaki[4];
-        if (y >= 2 && y <= rozmiarYAkt - 2)
+        for (int x = 0; x < aktWiel; x++)
         {
-            for (int i = 0; i < rozmiarXAkt-4; i+=ods*2)
+            pozX = x*ods*2;
+            pozY = y*ods;
+
+            for (int iy = 0; iy <= ods; iy++)
             {
-                tab[4+i][y] = znaki[10];
-            }
-        }
-        for (int x = 0; x <= rozmiarXAkt; x++)
-        {
-            if (y == 0 || y == rozmiarYAkt)
-            {
-                tab[x][y] = znaki[5];
+                pozX = x * ods * 2;
+                tab[pozX][pozY] = znaki[10];
+                tab[pozX + ods*2][pozY] = znaki[10];
+                for (int ix = 0; ix <= ods*2; ix++)
+                {
+                    if (iy == 0)
+                    {
+                        tab[pozX][pozY] = znaki[11];
+                    }
+                    else if (iy == ods-1)
+                    {
+                        tab[pozX][pozY+1] = znaki[11];
+                    }
+                    pozX++;
+                }
+                pozY++;
             }
         }
     }
-    for (int x = 4; x < rozmiarXAkt-3; x++)
+
+    for (int y = 0; y <= aktWiel*ods; y++)
     {
-        for (int y = 2; y <= rozmiarYAkt-2; y+=ods)
+        for (int x = 0; x <= aktWiel * ods*2; x++)
         {
-            if (tab[x][y] == znaki[10]) 
-            {
-                if (x == 4)
-                {
-                    tab[x][y] = znaki[14];
-                }
-                else if (x == rozmiarXAkt-4)
-                {
-                    tab[x][y] = znaki[16];
-                }
-                else if (y == 2) 
-                {
-                    tab[x][y] = znaki[13];
-                }
-                else if (y == rozmiarYAkt-2)
-                {
-                    tab[x][y] = znaki[15];
-                }
-                else
-                {
+            if (y > 0 && y %ods == 0 && tab[x][y] != ' ' && tab[x][y - 1] != ' ') {
+                tab[x][y] = znaki[15];
+                if (y < rozmiarYAkt && tab[x][y + 1] != ' ') {
                     tab[x][y] = znaki[12];
                 }
             }
-            else
+            else if (y == 0 && tab[x][y+1] != ' ')
             {
-                tab[x][y] = znaki[11];
+                tab[x][y] = znaki[13];
             }
+        }
+        if (tab[0][y] == znaki[12]) {
+            tab[0][y] = znaki[14];
+        }
+        if (tab[aktWiel*ods*2][y] == znaki[12]) {
+            tab[aktWiel*ods*2][y] = znaki[16];
+        }
+    }
+
+    tab[0][0] = znaki[6];
+    tab[rozmiarXAkt][0] = znaki[7];
+    tab[0][rozmiarYAkt] = znaki[8];
+    tab[rozmiarXAkt][rozmiarYAkt] = znaki[9];
+
+
+    #pragma endregion
+
+
+
+    for (int y = pozycja[0]*ods+2; y < pozycja[0] * ods+ods-1; y++)
+    {
+        for (int x = pozycja[1] * ods*2+3; x < pozycja[1] * 2*ods + 2*ods-2; x++)
+        {
+            tab[x][y] = (char)219;
         }
     }
 
 
-
-
-    tab[0][0] = znaki[0];
-    tab[rozmiarXAkt][0] = znaki[1];
-    tab[0][abs(rozmiarYAkt)] = znaki[2];
-    tab[abs(rozmiarXAkt)][abs(rozmiarYAkt)] = znaki[3];
-
-    tab[4][2] = znaki[6];
-    tab[rozmiarXAkt-4][2] = znaki[7];
-    tab[4][abs(rozmiarYAkt-2)] = znaki[8];
-    tab[abs(rozmiarXAkt-4)][abs(rozmiarYAkt-2)] = znaki[9];
-
-
-
-
-    cout << "\x1B[2J\x1B[H";
+    cout << "\x1B[2J\x1B[H"; //system("cls");
     for (int y = 0; y <= rozmiarYAkt; y++)
     {
         for (int x = 0; x <= rozmiarXAkt; x++)
         {
             cout << tab[x][y];
         }
-        cout << "\n";
+        if(y!= rozmiarYAkt)cout << "\n";
     }
+    //cout << pozycja[0] << " " << pozycja[1];
+
 }
