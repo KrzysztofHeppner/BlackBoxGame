@@ -16,7 +16,8 @@ const int rozmiarYMax = 55;
 
 
 
-void WyswietlPlansze(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel, int rozmiarXAkt, int rozmiarYAkt, int ods, int pozycja[2]);
+void WyswietlPlansze(char key, char**tab, int aktWiel, int rozmiarXAkt,
+    int rozmiarYAkt, int ods, int pozycja[2], short **tabColor);
 
 //do kursora dla wygląd
 void ShowConsoleCursor(bool jaki)
@@ -36,12 +37,29 @@ void ShowConsoleCursor(bool jaki)
 int main() {
     #pragma region zmienne
     bool keyDown[14]{}; for (int i = 0; i < 14; i++) keyDown[i] = false;
-    char tab[rozmiarXMax][rozmiarYMax]{};
-    for (int y = 0; y < rozmiarYMax; y++){
-        for (int x = 0; x < rozmiarXMax; x++){
+    char **tab = new char*[rozmiarXMax];
+    for (int i = 0; i < rozmiarXMax; ++i)
+    {
+        tab[i] = new char[rozmiarYMax];
+    }
+    for (int y = 0; y < rozmiarYMax; ++y){
+        for (int x = 0; x < rozmiarXMax; ++x){
             tab[x][y] = ' ';
         }
     }
+
+    short** tabColor = new short* [rozmiarXMax];
+    for (int i = 0; i < rozmiarXMax; ++i)
+    {
+        tabColor[i] = new short[rozmiarYMax];
+    }
+    for (int y = 0; y < rozmiarYMax; ++y) {
+        for (int x = 0; x < rozmiarXMax; ++x) {
+            tabColor[x][y] = (short)15;
+        }
+    }
+
+
     int aktWiel = 7;
     int rozmiarXAkt = rozmiarXMax-1;
     int rozmiarYAkt = rozmiarYMax-1;
@@ -56,7 +74,7 @@ int main() {
 
     cout << "\x1B[2J\x1B[H";
     ShowConsoleCursor(false);
-    WyswietlPlansze(NULL, tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja);
+    WyswietlPlansze(NULL, tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja, tabColor);
     while (true)
     {
         for (int i = 0; i < 14; i++)
@@ -90,12 +108,17 @@ int main() {
                         tab[x][y] = ' ';
                     }
                 }
+                for (int y = 0; y < rozmiarYMax; ++y) {
+                    for (int x = 0; x < rozmiarXMax; ++x) {
+                        tabColor[x][y] = (short)15;
+                    }
+                }
                 rozmiarXAkt = rozmiarXMax - 1;
                 rozmiarYAkt = rozmiarYMax - 1;
                 ods = (rozmiarYAkt + 1) / (aktWiel + 1);
                 rozmiarYAkt = ods * aktWiel;
                 rozmiarXAkt = rozmiarYAkt * 2;
-                WyswietlPlansze(keyType[i], tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja);
+                WyswietlPlansze(keyType[i], tab, aktWiel, rozmiarXAkt, rozmiarYAkt, ods, pozycja, tabColor);
             }
             if (!(GetAsyncKeyState(keyType[i]) & 0x8000) && (keyDown[i] == true))
             {
@@ -106,10 +129,18 @@ int main() {
         Sleep(10);
     }
 
+    for (int i = 0; i < rozmiarXMax; ++i) {
+        delete[] tab[i];
+        delete[] tabColor[i];
+    }
+    delete[] tab;
+    delete[] tabColor;
+
     return 0;
 }
 
-void WyswietlPlansze(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel,  int rozmiarXAkt,  int rozmiarYAkt, int ods, int pozycja[2])
+void WyswietlPlansze(char key, char**tab, int aktWiel,  int rozmiarXAkt,
+    int rozmiarYAkt, int ods, int pozycja[2], short **tabColor)
 {
     #pragma region pusta plansza
     int pozX = 0;
@@ -175,22 +206,46 @@ void WyswietlPlansze(char key, char tab[rozmiarXMax][rozmiarYMax], int aktWiel, 
 
     #pragma endregion
 
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    /*
+    for (int k = 1; k < 255; k++)
+    {
+        // pick the colorattribute k you want
+        SetConsoleTextAttribute(hConsole, k);
+        cout << k << " I want to be nice today!" << endl;
+    }*/
+    
+    for (int y = 0; y < rozmiarYAkt; y++)
+    {
+        for (int x = 0; x < rozmiarXAkt; x++)
+        {
+            if (tab[x][y] == ' ')
+            {
+                tabColor[x][y] = (short)79;
+            }
+            if (y >= ods && y < rozmiarYAkt - ods && x >= ods*2 && x < rozmiarXAkt - ods*2)
+            {
+                x = rozmiarXAkt - ods*2;
+            }
+        }
+    }
+
 
 
     for (int y = pozycja[0]*ods+2; y < pozycja[0] * ods+ods-1; y++)
     {
         for (int x = pozycja[1] * ods*2+3; x < pozycja[1] * 2*ods + 2*ods-2; x++)
         {
-            tab[x][y] = (char)219;
+            tabColor[x][y] = (short)143;
         }
     }
-
 
     cout << "\x1B[2J\x1B[H"; //system("cls");
     for (int y = 0; y <= rozmiarYAkt; y++)
     {
         for (int x = 0; x <= rozmiarXAkt; x++)
         {
+            SetConsoleTextAttribute(hConsole, tabColor[x][y]);
             cout << tab[x][y];
         }
         if(y!= rozmiarYAkt)cout << "\n";
