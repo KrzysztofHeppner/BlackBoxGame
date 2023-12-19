@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 #define B  "\033[30m"      /* Czarny */
 #define C  "\033[31m"      /* Czerwony */
 #define G  "\033[32m"      /* Zielony */
